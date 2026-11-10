@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radar Koin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f4;--card:#fff;--ink:#14202b;--mute:#5b6b7a;--line:#d9e0e6;--up:#0a8f63;--dn:#d23b55;--warn:#b7791f;--acc:#1d4ed8;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1720;--card:#172230;--ink:#e6edf3;--mute:#93a3b3;--line:#263545;--up:#2ecf94;--dn:#ff6b82;--warn:#e3b04b;--acc:#7aa2ff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1720;--card:#172230;--ink:#e6edf3;--mute:#93a3b3;--line:#263545;--up:#2ecf94;--dn:#ff6b82;--warn:#e3b04b;--acc:#7aa2ff;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 Figtree,system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px 14px 40px}
+h1,h2{font-family:"Bricolage Grotesque",Figtree,sans-serif;margin:0}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
+h2{font-size:18px;font-weight:600}
+.sub{color:var(--mute);margin:2px 0 14px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+button{font:inherit;color:inherit;cursor:pointer}
+.seg button{border:0;background:none;padding:8px 14px;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;min-height:40px}
+label.chk{display:flex;gap:6px;align-items:center;min-height:40px}
+.note{font-size:13px;color:var(--mute);margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+#field{width:100%;height:auto;display:block;touch-action:manipulation}
+#field g{cursor:pointer}
+#field g:focus-visible circle{stroke-width:4;outline:none}
+#field text{pointer-events:none;fill:var(--ink);text-anchor:middle;font-family:Figtree,sans-serif}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid currentColor}
+.r-rendah{color:var(--up)}.r-sedang{color:var(--warn)}.r-tinggi{color:var(--dn)}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:10px 0}
+.kv{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.kv small{display:block;color:var(--mute)}
+.kv b{font-size:16px}
+ul.why{margin:6px 0 0;padding-left:18px}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:8px}
+.calc label{display:block;font-size:13px;color:var(--mute)}
+input[type=number]{width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:40px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th,td{text-align:right;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tbody tr{cursor:pointer}
+tbody tr:hover,tbody tr[aria-selected="true"]{background:var(--bg)}
+.bar2{height:6px;border-radius:3px;background:var(--line);min-width:50px;display:inline-block;width:60px;vertical-align:middle;margin-left:6px}
+.bar2 i{display:block;height:100%;border-radius:3px;background:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+<h1>Radar Koin</h1>
+<p class="sub">Saring koin yang sedang melejit, lihat skor dan risikonya sebelum memutuskan.</p>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Periode"><button data-p="h1" aria-pressed="true">1 jam</button><button data-p="h24" aria-pressed="false">24 jam</button></div>
+  <label class="chk"><input type="checkbox" id="hide"> Sembunyikan risiko tinggi</label>
+  <button class="btn" id="live">Data live Binance</button>
+  <button class="btn" id="idx">Data live Indodax (Rp)</button>
+</div>
+<p class="note" id="mode">Mode: data contoh (bukan harga asli). Tekan gelembung atau baris untuk melihat detail.</p>
+
+<div class="card"><svg id="field" viewBox="0 0 360 400" role="img" aria-label="Peta gelembung koin"></svg></div>
+
+<div class="card" id="detail"><h2>Detail koin</h2><p class="note">Pilih satu koin untuk melihat sinyal dan menghitung ukuran posisi.</p></div>
+
+<div class="card">
+  <h2>Peringkat skor momentum</h2>
+  <div class="tw"><table><thead><tr><th>Koin</th><th>1 jam</th><th>24 jam</th><th>Volume x</th><th>Skor</th><th>Risiko</th></tr></thead><tbody id="rows"></tbody></table></div>
+</div>
+
+<p class="note">Ini alat bantu penyaring, bukan nasihat keuangan dan bukan ramalan harga. Koin yang sudah melejit bisa turun tajam. Pakai modal yang siap hilang dan selalu pasang batas rugi.</p>
+</main>
+
+<script>
+// Data contoh: n=nama, h1/h24=% perubahan, vx=volume dibanding rata-rata 7 hari, vol=volume 24j (juta USD), mc=market cap (juta USD), rsi, age=umur listing (hari)
+const SAMPLE=[
+["NOVA","Nova Chain",14.2,38,4.8,62,410,78,420],["PIXL","Pixel Realm",9.6,22,3.1,35,180,71,300],["KRYO","Kryo Protocol",22.5,145,9.5,12,25,91,12],
+["LUMA","Lumen Labs",6.1,18,2.4,48,520,66,610],["ZEPH","Zephyr Net",-3.2,-8,0.9,20,260,42,800],["BOLT","Bolt Swap",11.3,41,5.2,88,700,74,390],
+["MIRA","Mira AI",18.9,67,6.7,29,95,83,95],["TERR","Terra Nodes",2.4,9,1.6,150,2100,58,1500],["FLUX","Flux Index",-6.8,-15,0.7,41,330,35,900],
+["ORBI","Orbit Finance",7.7,26,3.6,54,240,69,260],["GRIT","Grit Games",31,210,12,6,9,95,6],["SAGE","Sage Oracle",4.2,12,1.8,72,1300,61,1100],
+["NEXA","Nexa Pay",-1.1,3,1.1,95,1800,50,1300],["VOLT","Volt Energy",8.9,33,4.4,44,160,72,210],["ARCA","Arca Vault",12.4,29,2.9,67,880,70,520],
+["DUNE","Dune Layer",-9.5,-22,1.2,38,410,29,700],["QUAN","Quanta",5.3,15,2.1,110,1650,63,950],["HELI","Helio Bridge",16.8,54,7.1,31,70,81,60],
+["RIVO","Rivo Social",3.1,11,1.4,26,300,57,480],["JADE","Jade Wallet",10.2,35,3.9,58,430,73,340],["TIDE","Tide DAO",-2.4,-5,0.8,18,150,44,650],
+["ECHO","Echo Storage",6.6,20,2.6,52,610,67,570],["PYRO","Pyro Meme",27,320,15,4,6,97,4],["ATLS","Atlas Data",9.1,30,3.3,79,950,70,430]
+].map(a=>({s:a[0],n:a[1],h1:a[2],h24:a[3],vx:a[4],vol:a[5],mc:a[6],rsi:a[7],age:a[8],p:+(0.05+((a[0].charCodeAt(0)*31+a[0].charCodeAt(1)*17)%900)/37).toFixed(4)}));
+
+let data=SAMPLE.slice(), P="h1", sel=null, live=false, IDR=false;
+const $=id=>document.getElementById(id);
+const th=Math.tanh;
+const pct=v=>v==null?"-":(v>0?"+":"")+v.toFixed(1).replace(".",",")+"%";
+const usd=v=>v==null?"-":"$"+v.toLocaleString("id-ID",{maximumFractionDigits:1})+" jt";
+const rp=v=>"Rp"+Math.round(v).toLocaleString("id-ID");
+
+function score(c){
+  const vx=c.vx==null?1:c.vx;
+  const v=40*th(c.h1/8)+30*th(c.h24/40)+30*th((vx-1)/4);
+  return Math.round(Math.max(0,Math.min(100,v)));
+}
+function risk(c){
+  const why=[];
+  if(c.h24>100)why.push("Naik lebih dari 100% dalam sehari, rawan pump dan dump");
+  if(c.mc!=null&&c.mc<30)why.push("Market cap kecil, harga mudah dimanipulasi");
+  if(c.vol<(IDR?500:2))why.push("Volume rendah, sulit dijual saat ingin keluar");
+  if(c.age!=null&&c.age<30)why.push("Listing baru, riwayat harga pendek");
+  if(why.length)return{lv:"tinggi",why};
+  if(c.h24>50)why.push("Naik lebih dari 50% dalam sehari");
+  if(c.rsi!=null&&c.rsi>=80)why.push("RSI sangat tinggi (jenuh beli)");
+  if(c.vol<(IDR?2000:10))why.push("Likuiditas pas-pasan");
+  if(why.length)return{lv:"sedang",why};
+  return{lv:"rendah",why:["Tidak ada tanda bahaya dari aturan yang dipakai"]};
+}
+function signal(c){
+  const sc=score(c),r=risk(c).lv;
+  if(r==="tinggi")return["Hindari","Risikonya terlalu tinggi untuk masuk berdasarkan sinyal saja."];
+  if(c.rsi!=null&&c.rsi>=80)return["Rawan koreksi","Sudah jenuh beli. Menunggu pullback biasanya lebih aman."];
+  if(sc>=60&&r==="rendah")return["Kandidat beli","Momentum dan volume kuat, risiko terukur. Tentukan batas rugi dulu."];
+  if(sc>=45)return["Pantau","Ada momentum, tapi belum cukup kuat. Tunggu konfirmasi volume."];
+  return["Abaikan","Momentum lemah atau sedang turun."];
+}
+// Rencana harga: level dihitung dari aturan volatilitas sederhana, bukan prediksi
+function plan(c){
+  const sg=signal(c)[0];
+  if(sg==="Hindari"||sg==="Abaikan"||!c.p)return null;
+  const sl=c.atr?Math.max(3,Math.min(12,c.atr*1.5)):Math.max(3,Math.min(12,Math.max(Math.abs(c.h1)*.8,Math.abs(c.h24)*.2)));
+  const wait=sg!=="Kandidat beli";
+  const hi=c.p*(1-(wait?.4:0)*sl/100);let lo=c.p*(1-(wait?.8:.4)*sl/100);if(c.sup&&c.sup<hi*.995)lo=Math.max(lo,c.sup);const en=(hi+lo)/2;
+  return{sl,wait,hi,lo,stop:en*(1-sl/100),t1:en*(1+1.5*sl/100),t2:en*(1+3*sl/100)};
+}
+const fp=v=>IDR?(v>=100?Math.round(v).toLocaleString("id-ID"):v.toFixed(2).replace(".",",")):(v>=100?v.toFixed(2):v>=1?v.toFixed(3):v.toFixed(5));
+const val=c=>P==="h1"?c.h1:c.h24;
+const list=()=>data.filter(c=>!($("hide").checked&&risk(c).lv==="tinggi")).sort((a,b)=>score(b)-score(a));
+
+// Tata letak gelembung: relaksasi sederhana
+function layout(items){
+  let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const W=360,H=400;
+  const n=items.map(c=>({c,r:Math.max(17,Math.min(58,15+Math.sqrt(Math.abs(val(c)))*(P==="h1"?7:3.6))),x:40+rnd()*280,y:40+rnd()*320}));
+  for(let it=0;it<160;it++){
+    for(const a of n){a.x+=(W/2-a.x)*.01;a.y+=(H/2-a.y)*.01}
+    for(let i=0;i<n.length;i++)for(let j=i+1;j<n.length;j++){
+      const a=n[i],b=n[j];let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,m=a.r+b.r+2;
+      if(d<m){const k=(m-d)/2/d;a.x-=dx*k;a.y-=dy*k;b.x+=dx*k;b.y+=dy*k}
+    }
+    for(const a of n){a.x=Math.max(a.r+2,Math.min(W-a.r-2,a.x));a.y=Math.max(a.r+2,Math.min(H-a.r-2,a.y))}
+  }
+  return n;
+}
+
+function draw(){
+  const L=list();
+  const g=layout(L);
+  $("field").innerHTML=g.map(b=>{
+    const v=val(b.c),col=v>=0?"var(--up)":"var(--dn)",on=sel===b.c.s;
+    return `<g tabindex="0" role="button" data-s="${b.c.s}" aria-label="${b.c.n}, ${pct(v)}"><circle cx="${b.x.toFixed(1)}" cy="${b.y.toFixed(1)}" r="${b.r.toFixed(1)}" fill="${col}" fill-opacity="${on?.5:.22}" stroke="${col}" stroke-width="${on?4:2}"/><text x="${b.x.toFixed(1)}" y="${(b.y-1).toFixed(1)}" font-size="${Math.max(10,b.r/3.2).toFixed(1)}" font-weight="600">${b.c.s}</text><text x="${b.x.toFixed(1)}" y="${(b.y+b.r/3.2+3).toFixed(1)}" font-size="${Math.max(9,b.r/4).toFixed(1)}">${pct(v)}</text></g>`;
+  }).join("");
+  $("rows").innerHTML=L.map(c=>{
+    const r=risk(c),sc=score(c);
+    return `<tr data-s="${c.s}" tabindex="0" aria-selected="${sel===c.s}"><td><b>${c.s}</b> <span class="note">${c.n}</span></td><td class="${c.h1>=0?"up":"dn"}">${pct(c.h1)}</td><td class="${c.h24>=0?"up":"dn"}">${pct(c.h24)}</td><td>${c.vx==null?"-":c.vx.toFixed(1).replace(".",",")+"x"}</td><td>${sc}<span class="bar2"><i style="width:${sc}%"></i></span></td><td><span class="pill r-${r.lv}">${r.lv}</span></td></tr>`;
+  }).join("");
+}
+
+function detail(){
+  const c=data.find(x=>x.s===sel);if(!c)return;
+  const r=risk(c),[sg,why]=signal(c),pl=plan(c);
+  $("detail").innerHTML=`<h2>${c.n} (${c.s})</h2>
+  <p style="margin:6px 0"><span class="pill r-${r.lv}">Risiko ${r.lv}</span> &nbsp;<b>${sg}</b>: ${why}</p>
+  <div class="grid">
+    <div class="kv"><small>Skor momentum</small><b>${score(c)} / 100</b></div>
+    <div class="kv"><small>1 jam</small><b class="${c.h1>=0?"up":"dn"}">${pct(c.h1)}</b></div>
+    <div class="kv"><small>24 jam</small><b class="${c.h24>=0?"up":"dn"}">${pct(c.h24)}</b></div>
+    <div class="kv"><small>Volume vs rata-rata</small><b>${c.vx==null?"-":c.vx.toFixed(1).replace(".",",")+"x"}</b></div>
+    <div class="kv"><small>Volume 24 jam</small><b>${usd(c.vol)}</b></div>
+    <div class="kv"><small>Market cap</small><b>${usd(c.mc)}</b></div>
+    <div class="kv"><small>RSI</small><b>${c.rsi==null?"-":c.rsi}</b></div>
+    <div class="kv"><small>Umur listing</small><b>${c.age==null?"-":c.age+" hari"}</b></div>
+  </div>
+  ${pl?`<h2 style="margin-top:16px">Rencana harga</h2>
+  <div class="grid">
+    <div class="kv"><small>${pl.wait?"Tunggu turun ke zona":"Zona beli"}</small><b>$${fp(pl.lo)} - $${fp(pl.hi)}</b></div>
+    <div class="kv"><small>Batas rugi (-${pl.sl.toFixed(1).replace(".",",")}%)</small><b class="dn">$${fp(pl.stop)}</b></div>
+    <div class="kv"><small>Jual sebagian (target 1)</small><b class="up">$${fp(pl.t1)}</b></div>
+    <div class="kv"><small>Jual sisanya (target 2)</small><b class="up">$${fp(pl.t2)}</b></div>
+    ${c.sup?`<div class="kv"><small>Support / resistance 48 jam</small><b>$${fp(c.sup)} / $${fp(c.res)}</b></div>`:""}
+  </div>
+  <p class="note">Harga sekarang $${fp(c.p)}. ${pl.wait?"Jangan kejar harga, tunggu masuk zona. ":""}Setelah target 1 tercapai, geser batas rugi ke harga beli. Batalkan rencana jika harga menembus batas rugi sebelum masuk zona. ${c.atr?"Level memakai ATR dan support dari candle 1 jam, bukan prediksi.":"Level dihitung dari aturan volatilitas sederhana, bukan prediksi."}</p>${c.bt?`<p class="note"><b>Uji historis 500 jam terakhir</b> (aturan lonjakan volume, 1R = jarak batas rugi): ${c.bt.n?`${c.bt.n} sinyal, menang ${Math.round(c.bt.w/c.bt.n*100)}%, rata-rata ${c.bt.r.toFixed(2).replace(".",",")}R. ${c.bt.n<10?"Sampel terlalu sedikit untuk dipercaya.":"Hasil lalu tidak menjamin ke depan."}`:"belum ada sinyal pada periode ini."}</p>`:""}`:`<p class="note"><b>Tidak ada rencana harga.</b> Sinyal ${sg.toLowerCase()} membuat entry tidak disarankan.</p>`}
+  <b>Alasan label risiko</b><ul class="why">${r.why.map(w=>`<li>${w}</li>`).join("")}</ul>
+  <h2 style="margin-top:16px">Kalkulator ukuran posisi</h2>
+  <div class="calc">
+    <div><label for="m">Modal (Rp)</label><input id="m" type="number" min="0" value="5000000"></div>
+    <div><label for="rk">Risiko per trade (%)</label><input id="rk" type="number" min="0.1" step="0.1" value="2"></div>
+    <div><label for="sl">Batas rugi (%)</label><input id="sl" type="number" min="0.1" step="0.1" value="${pl?pl.sl.toFixed(1):5}"></div>
+    <div><label for="tp">Target untung (%)</label><input id="tp" type="number" min="0.1" step="0.1" value="${pl?(pl.sl*1.5).toFixed(1):10}"></div>
+  </div>
+  <div class="grid" id="out"></div>`;
+  if(IDR)$("detail").innerHTML=$("detail").innerHTML.replace(/\$(?=\d)/g,"Rp");
+  ["m","rk","sl","tp"].forEach(i=>$(i).addEventListener("input",calc));
+  calc();
+}
+function calc(){
+  const m=+$("m").value,rk=+$("rk").value,sl=+$("sl").value,tp=+$("tp").value;
+  if(!(m>0&&rk>0&&sl>0&&tp>0)){$("out").innerHTML='<p class="note">Isi semua kolom dengan angka lebih dari 0.</p>';return}
+  const maxLoss=m*rk/100;let pos=maxLoss/(sl/100);const capped=pos>m;if(capped)pos=m;
+  const loss=pos*sl/100,gain=pos*tp/100;
+  $("out").innerHTML=`<div class="kv"><small>Ukuran posisi</small><b>${rp(pos)}</b></div><div class="kv"><small>Rugi maksimal</small><b class="dn">${rp(loss)}</b></div><div class="kv"><small>Untung di target</small><b class="up">${rp(gain)}</b></div><div class="kv"><small>Rasio untung:rugi</small><b>${(tp/sl).toFixed(1).replace(".",",")} : 1</b></div>${capped?'<p class="note">Posisi dibatasi sebesar modal (tanpa leverage).</p>':""}`;
+}
+
+function pick(e){
+  const t=e.target.closest("[data-s]");if(!t)return;
+  sel=t.dataset.s;draw();detail();
+  $("detail").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth",block:"nearest"});
+}
+["field","rows"].forEach(id=>{
+  $(id).addEventListener("click",pick);
+  $(id).addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(e)}});
+});
+document.querySelectorAll("[data-p]").forEach(b=>b.addEventListener("click",()=>{
+  P=b.dataset.p;document.querySelectorAll("[data-p]").forEach(x=>x.setAttribute("aria-pressed",x===b));draw();
+}));
+$("hide").addEventListener("change",draw);
+
+// Indikator dari candle 1 jam (Binance klines)
+function rsiSeries(cl){const o=Array(cl.length).fill(null);let g=0,l=0;for(let i=1;i<cl.length;i++){const d=cl[i]-cl[i-1],u=Math.max(d,0),w=Math.max(-d,0);if(i<=14){g+=u;l+=w;if(i===14){g/=14;l/=14;o[i]=l?100-100/(1+g/l):100}}else{g=(g*13+u)/14;l=(l*13+w)/14;o[i]=l?100-100/(1+g/l):100}}return o}
+// Uji historis: masuk saat volume >2x rata-rata 20 jam, candle hijau >1%, RSI <75. Keluar di batas rugi, target 1,5R, atau 24 jam.
+function backtest(k){
+  const o=k.map(x=>+x[1]),h=k.map(x=>+x[2]),l=k.map(x=>+x[3]),c=k.map(x=>+x[4]),v=k.map(x=>+x[7]),r=rsiSeries(c);
+  const tr=c.map((x,i)=>i?Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])):h[i]-l[i]);
+  let n=0,w=0,sum=0;
+  for(let i=30;i<k.length-24;i++){
+    const av=v.slice(i-20,i).reduce((a,b)=>a+b)/20;
+    if(!(v[i]>2*av&&c[i]>o[i]*1.01&&r[i]<75))continue;
+    const atr=tr.slice(i-13,i+1).reduce((a,b)=>a+b)/14/c[i]*100,sl=Math.max(3,Math.min(12,atr*1.5)),stop=c[i]*(1-sl/100),tp=c[i]*(1+1.5*sl/100);
+    let res=null;
+    for(let j=i+1;j<=i+24;j++){if(l[j]<=stop){res=-1;break}if(h[j]>=tp){res=1.5;break}}
+    if(res===null)res=(c[i+24]-c[i])/c[i]*100/sl;
+    n++;if(res>0)w++;sum+=res;i+=24;
+  }
+  return{n,w,r:n?sum/n:0};
+}
+async function enrich(B){
+  const top=data.slice().sort((a,b)=>score(b)-score(a)).slice(0,25),ok=[];
+  await Promise.all(top.map(async c=>{try{
+    const k=await getK(B,c);
+    if(!Array.isArray(k)||k.length<100)return;
+    const h=k.map(x=>+x[2]),l=k.map(x=>+x[3]),cl=k.map(x=>+x[4]),v=k.map(x=>+x[7]),L=k.length;
+    c.rsi=Math.round(rsiSeries(cl)[L-1]);if(c.h1==null)c.h1=(cl[L-1]/cl[L-2]-1)*100;
+    const last=v.slice(L-24).reduce((a,b)=>a+b),prev=v.slice(L-96,L-24).reduce((a,b)=>a+b)/3;
+    c.vx=prev?last/prev:null;
+    let t=0;for(let i=L-14;i<L;i++)t+=Math.max(h[i]-l[i],Math.abs(h[i]-cl[i-1]),Math.abs(l[i]-cl[i-1]));
+    c.atr=t/14/cl[L-1]*100;
+    c.sup=Math.min(...l.slice(L-48));c.res=Math.max(...h.slice(L-48));
+    c.bt=backtest(k);ok.push(c);
+  }catch(e){}}));
+  if(ok.length)data=ok;
+}
+// Candle 1 jam: Binance, atau Indodax (history_v2) dinormalkan ke format [t,o,h,l,c,vol,0,nilaiVol]
+async function getK(B,c){
+  if(!IDR)return (await fetch(B+"klines?symbol="+c.n+"&interval=1h&limit=500")).json();
+  const to=Math.floor(Date.now()/1000),fr=to-500*3600;
+  const j=await (await fetch("https://indodax.com/tradingview/history_v2?symbol="+c.n.replace("_","").toUpperCase()+"&tf=60&from="+fr+"&to="+to)).json();
+  const g=(o,k)=>+(o[k]??o[k.toLowerCase()]);
+  let r;
+  if(Array.isArray(j)&&j.length&&!Array.isArray(j[0]))r=j.map(x=>[g(x,"Time"),g(x,"Open"),g(x,"High"),g(x,"Low"),g(x,"Close"),g(x,"Volume")]);
+  else if(Array.isArray(j))r=j.map(x=>x.map(Number));
+  else if(j&&j.c)r=j.c.map((_,i)=>[j.t[i],j.o[i],j.h[i],j.l[i],j.c[i],j.v?j.v[i]:0]);
+  else return [];
+  r.sort((a,b)=>a[0]-b[0]);
+  return r.map(x=>[x[0],x[1],x[2],x[3],x[4],x[5],0,x[5]*x[4]]);
+}
+$("idx").addEventListener("click",async()=>{
+  const m=$("mode");m.textContent="Mengambil data Indodax...";
+  try{
+    const j=await (await fetch("https://indodax.com/api/summaries")).json();
+    const t=Object.entries(j.tickers).filter(([k,x])=>k.endsWith("_idr")&&+x.vol_idr>1e8);
+    data=t.map(([k,x])=>{const o=+j.prices_24h[k];return{s:k.replace("_idr","").toUpperCase(),n:k,h1:null,h24:o?(+x.last/o-1)*100:0,vx:null,vol:+x.vol_idr/1e6,mc:null,rsi:null,age:null,p:+x.last}});
+    IDR=true;live=true;sel=null;m.textContent="Menghitung indikator dari candle 1 jam Indodax...";draw();
+    await enrich("");
+    m.textContent="Mode: data live Indodax (Rupiah). Indikator dihitung untuk 25 koin teratas. Volume dalam juta Rp.";
+    $("detail").innerHTML='<h2>Detail koin</h2><p class="note">Pilih satu koin untuk melihat sinyal.</p>';draw();
+  }catch(e){
+    IDR=false;m.textContent="Data Indodax tidak bisa diakses dari halaman ini (belum di-hosting sendiri, atau diblokir CORS). Tetap memakai data sebelumnya.";
+  }
+});
+// Data live: berjalan jika halaman ini di-hosting sendiri (Binance API publik, tanpa API key)
+$("live").addEventListener("click",async()=>{
+  const m=$("mode");IDR=false;m.textContent="Mengambil data live...";
+  try{
+    const B="https://api.binance.com/api/v3/";
+    const all=await (await fetch(B+"ticker/24hr")).json();
+    const t=all.filter(x=>x.symbol.endsWith("USDT")&&!/UP|DOWN|BULL|BEAR/.test(x.symbol)&&+x.quoteVolume>1e6).sort((a,b)=>b.quoteVolume-a.quoteVolume).slice(0,60);
+    const h=await (await fetch(B+"ticker?windowSize=1h&symbols="+encodeURIComponent(JSON.stringify(t.map(x=>x.symbol))))).json();
+    const hm=Object.fromEntries(h.map(x=>[x.symbol,+x.priceChangePercent]));
+    data=t.map(x=>({s:x.symbol.replace("USDT",""),n:x.symbol,h1:hm[x.symbol]||0,h24:+x.priceChangePercent,vx:null,vol:+x.quoteVolume/1e6,mc:null,rsi:null,age:null,p:+x.lastPrice}));
+    live=true;sel=null;m.textContent="Menghitung indikator dari candle 1 jam...";await enrich(B);m.textContent="Mode: data live Binance. RSI, volume, ATR, support, dan uji historis dihitung dari candle 1 jam untuk 25 koin teratas.";
+    $("detail").innerHTML='<h2>Detail koin</h2><p class="note">Pilih satu koin untuk melihat sinyal.</p>';draw();
+  }catch(e){
+    m.textContent="Data live tidak bisa diakses dari halaman ini. Hosting sendiri (Cloudflare Pages atau Vercel) agar tersambung. Tetap memakai data contoh.";
+  }
+});
+draw();
+</script>
+</body>
+</html>
